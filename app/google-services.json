@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "837221108534",
+    "project_id": "ucllgip4janhanssen",
+    "storage_bucket": "ucllgip4janhanssen.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:837221108534:android:870c10ea173425fa4f8197",
+        "android_client_info": {
+          "package_name": "be.ucll.ucllgip4janhanssen"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCcrOIBhRoCF5RpT8VfXfEgf5UPH_VhCiE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
