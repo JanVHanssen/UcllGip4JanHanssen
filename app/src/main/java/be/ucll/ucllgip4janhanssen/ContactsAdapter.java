@@ -14,7 +14,7 @@ import java.util.List;
 // De adapter gaat ervoor zorgen dat de data mooi wordt weergegeven in een recyclerview, lijst
 public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ContactViewHolder> {
 
-    private static List<Contact> contacts = new ArrayList<>();
+    private List<Contact> contacts = new ArrayList<>();
     private OnContactClickListener onContactClickListener;
 
     public ContactsAdapter(OnContactClickListener listener) {
@@ -25,7 +25,7 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.Contac
     @Override
     public ContactViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.contacts_item, parent, false);
-        return new ContactViewHolder(itemView, onContactClickListener);
+        return new ContactViewHolder(itemView);
     }
 
     @Override
@@ -44,12 +44,12 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.Contac
         notifyDataSetChanged();
     }
 
-    static class ContactViewHolder extends RecyclerView.ViewHolder {
+    class ContactViewHolder extends RecyclerView.ViewHolder {
         private TextView firstNameTextView;
         private TextView lastNameTextView;
         private View onlineIndicatorView;
 
-        public ContactViewHolder(View itemView, OnContactClickListener listener) {
+        public ContactViewHolder(View itemView) {
             super(itemView);
             firstNameTextView = itemView.findViewById(R.id.contactFirstName);
             lastNameTextView = itemView.findViewById(R.id.contactLastName);
@@ -59,8 +59,8 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.Contac
                 @Override
                 public void onClick(View view) {
                     int position = getAdapterPosition();
-                    if (position != RecyclerView.NO_POSITION && listener != null) {
-                        listener.onContactClick(contacts.get(position));
+                    if (position != RecyclerView.NO_POSITION && onContactClickListener != null) {
+                        onContactClickListener.onContactClick(contacts.get(position));
                     }
                 }
             });
@@ -70,6 +70,8 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.Contac
             firstNameTextView.setText(contact.getFirstName());
             lastNameTextView.setText(contact.getLastName());
 
+            // Adjust this part according to your Contact class implementation
+            // For demonstration, I'll assume a similar method exists in your Contact class.
             if (contact.isOnline()) {
                 onlineIndicatorView.setBackgroundResource(R.drawable.green_dot);
             } else {

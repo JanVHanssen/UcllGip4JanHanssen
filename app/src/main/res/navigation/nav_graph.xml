@@ -8,7 +8,19 @@
         android:id="@+id/ContactsFragment"
         android:name="be.ucll.ucllgip4janhanssen.ContactsFragment"
         tools:layout="@layout/fragment_contacts">
-
     </fragment>
 
+    <fragment
+        android:id="@+id/ChatFragment"
+        android:name="be.ucll.ucllgip4janhanssen.ChatFragment"
+        tools:layout="@layout/fragment_chat">
+    </fragment>
+
+    <action
+        android:id="@+id/action_contacts_to_chat"
+        app:destination="@id/ChatFragment" />
+
+    <action
+        android:id="@+id/action_chat_to_contacts"
+        app:destination="@id/ContactsFragment" />
 </navigation>
