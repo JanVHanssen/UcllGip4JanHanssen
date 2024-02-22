@@ -8,13 +8,18 @@ public class Contact {
     private String phoneNumber;
     private boolean online;
 
+    private boolean isChecked;
+
     // Constructor
-    public Contact(long id, String firstName, String lastName, String phoneNumber, boolean online) {
+    public Contact() {
+    }
+    public Contact(long id, String firstName, String lastName, String phoneNumber, boolean online, boolean isChecked) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.phoneNumber = phoneNumber;
         this.online = online;
+        this.isChecked = isChecked;
     }
 
     // Getters and setters
@@ -56,5 +61,13 @@ public class Contact {
 
     public void setOnline(boolean online) {
         this.online = online;
+    }
+
+    public boolean isChecked() {
+        return isChecked;
+    }
+
+    public void setChecked(boolean checked) {
+        isChecked = checked;
     }
 }

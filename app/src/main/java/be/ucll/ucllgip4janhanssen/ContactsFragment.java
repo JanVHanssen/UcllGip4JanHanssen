@@ -24,6 +24,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -38,7 +39,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 // Fragment voor het weergeven van de contacten opgehaald uit de telefoon
-public class ContactsFragment extends Fragment implements OnContactClickListener {
+public class ContactsFragment extends Fragment implements OnContactClickListener, OnCheckboxChangedListener {
 
     private static final int PERMISSIONS_REQUEST_READ_CONTACTS = 100;
     private RecyclerView recyclerView;
@@ -83,11 +84,11 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
                 null, null, null, ContactsContract.Contacts.DISPLAY_NAME + " ASC");
 
         if (cursor != null) {
-            int idColumnIndex = cursor.getColumnIndex(ContactsContract.Contacts._ID);
-            int nameColumnIndex = cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME);
-            int hasPhoneNumberColumnIndex = cursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER);
+            try {
+                int idColumnIndex = cursor.getColumnIndex(ContactsContract.Contacts._ID);
+                int nameColumnIndex = cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME);
+                int hasPhoneNumberColumnIndex = cursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER);
 
-            if (idColumnIndex != -1 && nameColumnIndex != -1 && hasPhoneNumberColumnIndex != -1) {
                 while (cursor.moveToNext()) {
                     String idString = cursor.getString(idColumnIndex);
                     long id = Long.parseLong(idString);
@@ -101,42 +102,26 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
                         if (phoneCursor != null) {
                             int phoneNumberColumnIndex = phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
 
-                            if (phoneNumberColumnIndex != -1) {
-                                while (phoneCursor.moveToNext()) {
-                                    String phoneNumber = phoneCursor.getString(phoneNumberColumnIndex);
-                                    Contact contact = new Contact(id, name, "", phoneNumber, false);
-                                    contacts.add(contact);
-                                }
-                            } else {
-                                Log.e("PhoneCursor", "Phone number column not found");
+                            while (phoneCursor.moveToNext()) {
+                                String phoneNumber = phoneCursor.getString(phoneNumberColumnIndex);
+                                Contact contact = new Contact(id, name, "", phoneNumber, false, true);
+                                contacts.add(contact);
                             }
 
                             phoneCursor.close();
                         }
                     }
                 }
-            } else {
-                Log.e("Cursor", "Required columns not found");
+            } finally {
+                cursor.close();
             }
-
-            cursor.close();
         } else {
             Log.e("Cursor", "Cursor is null");
         }
 
-
         Log.d("PhoneContacts", "Users in phone contacts:");
         for (Contact contact : contacts) {
             Log.d("PhoneContacts", contact.getFirstName() + " " + contact.getLastName() + ", Phone: " + contact.getPhoneNumber());
-        }
-
-        for (Contact contact : contacts) {
-            for (User user : registeredUsers) {
-                if (user.getPhoneNumber().equals(contact.getPhoneNumber())) {
-                    Log.d("MatchFound", "Match found for contact: " + contact.getLastName());
-                    break;
-                }
-            }
         }
 
         List<String> standardizedRegisteredPhoneNumbers = registeredUsers.stream()
@@ -148,8 +133,33 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
         for (Contact contact : contacts) {
             String standardizedContactPhoneNumber = standardizePhoneNumber(contact.getPhoneNumber());
             if (standardizedRegisteredPhoneNumbers.contains(standardizedContactPhoneNumber)) {
-                registeredContacts.add(contact);
+                // Split full name into first name and last name
+                String[] fullNameParts = contact.getFirstName().split("\\s+", 2); // Split by whitespace, maximum 2 parts
+                String firstName = fullNameParts[0]; // First part is first name
+                String lastName = fullNameParts.length > 1 ? fullNameParts[1] : ""; // Second part is last name (if available)
+
+                // Create a new Contact object with standardized phone number, first name, last name, and default values for other fields
+                Contact newContact = new Contact(contact.getId(), firstName, lastName, standardizedContactPhoneNumber, false, true);
+
+                // Add newContact to registeredContacts list
+                registeredContacts.add(newContact);
             }
+        }
+
+        // Reference to the current user's document
+        String currentUserPhoneNumber = getCurrentUserPhoneNumber();
+        String standardizedCurrentUserPhoneNumber = standardizePhoneNumber(currentUserPhoneNumber);
+        CollectionReference userContactsRef = db.collection("users").document(standardizedCurrentUserPhoneNumber).collection("contacts");
+
+        // Save each registered contact to Firestore
+        for (Contact contact : registeredContacts) {
+            // Use the contact's phone number as the document ID
+            String contactPhoneNumber = contact.getPhoneNumber();
+
+            // Set data for the contact document
+            userContactsRef.document(contactPhoneNumber).set(contact)
+                    .addOnSuccessListener(aVoid -> Log.d("Firestore", "Contact added for user: " + currentUserPhoneNumber))
+                    .addOnFailureListener(e -> Log.e("Firestore", "Error adding contact for user: " + currentUserPhoneNumber, e));
         }
 
         Log.d("RegisteredContacts", "Users in phone contacts and database:");
@@ -159,6 +169,7 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
 
         adapter.setContacts(registeredContacts);
     }
+
 
     private void loadRegisteredUsers() {
         registeredUsers = new ArrayList<>();
@@ -295,4 +306,9 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
         }
         return standardizedNumber;
     }
+    @Override
+    public void onCheckboxChanged(Contact contact, boolean isChecked) {
+        // Implementation of onCheckboxChanged
+    }
 }
+

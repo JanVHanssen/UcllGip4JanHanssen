@@ -16,6 +16,18 @@
         tools:layout="@layout/fragment_chat">
     </fragment>
 
+    <fragment
+        android:id="@+id/SettingsFragment"
+        android:name="be.ucll.ucllgip4janhanssen.SettingsFragment"
+        tools:layout="@layout/fragment_settings">
+    </fragment>
+
+    <fragment
+        android:id="@+id/WhitelistFragment"
+        android:name="be.ucll.ucllgip4janhanssen.WhitelistFragment"
+        tools:layout="@layout/fragment_whitelist">
+    </fragment>
+
     <action
         android:id="@+id/action_contacts_to_chat"
         app:destination="@id/ChatFragment" />
@@ -23,4 +35,17 @@
     <action
         android:id="@+id/action_chat_to_contacts"
         app:destination="@id/ContactsFragment" />
+
+    <action
+        android:id="@+id/action_main_to_settings"
+        app:destination="@id/SettingsFragment" />
+
+    <action
+        android:id="@+id/action_main_to_whitelist"
+        app:destination="@id/WhitelistFragment" />
+
+    <action
+        android:id="@+id/action_main_to_contacts"
+        app:destination="@id/ContactsFragment" />
+
 </navigation>

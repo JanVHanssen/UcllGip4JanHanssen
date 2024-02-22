@@ -3,6 +3,7 @@ package be.ucll.ucllgip4janhanssen;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -55,13 +56,10 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.Contac
             lastNameTextView = itemView.findViewById(R.id.contactLastName);
             onlineIndicatorView = itemView.findViewById(R.id.onlineIndicator);
 
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    int position = getAdapterPosition();
-                    if (position != RecyclerView.NO_POSITION && onContactClickListener != null) {
-                        onContactClickListener.onContactClick(contacts.get(position));
-                    }
+            itemView.setOnClickListener(view -> {
+                int position = getAdapterPosition();
+                if (position != RecyclerView.NO_POSITION && onContactClickListener != null) {
+                    onContactClickListener.onContactClick(contacts.get(position));
                 }
             });
         }
@@ -69,9 +67,7 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.Contac
         public void bind(Contact contact) {
             firstNameTextView.setText(contact.getFirstName());
             lastNameTextView.setText(contact.getLastName());
-
             // Adjust this part according to your Contact class implementation
-            // For demonstration, I'll assume a similar method exists in your Contact class.
             if (contact.isOnline()) {
                 onlineIndicatorView.setBackgroundResource(R.drawable.green_dot);
             } else {
