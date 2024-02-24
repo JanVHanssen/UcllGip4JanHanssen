@@ -27,6 +27,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
@@ -117,9 +118,23 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
                 }
             });
         }
+        Query query = userContactsRef.whereEqualTo("checked", true);
 
-        // Set the registered contacts in the RecyclerView
-        adapter.setContacts(registeredContacts);
+        // Fetch the contacts from the database based on the query
+        query.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                List<Contact> filteredContacts = new ArrayList<>();
+                for (DocumentSnapshot document : task.getResult()) {
+                    Contact contact = document.toObject(Contact.class);
+                    filteredContacts.add(contact);
+                }
+
+                // Set the filtered contacts in the RecyclerView
+                adapter.setContacts(filteredContacts);
+            } else {
+                Log.e("Firestore", "Error getting contacts", task.getException());
+            }
+        });
     }
     // Methode om de contacten uit de telefoon op te halen
     private List<Contact> fetchContactsFromDevice() {
