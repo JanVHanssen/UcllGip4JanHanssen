@@ -67,7 +67,6 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.Contac
         public void bind(Contact contact) {
             firstNameTextView.setText(contact.getFirstName());
             lastNameTextView.setText(contact.getLastName());
-            // Adjust this part according to your Contact class implementation
             if (contact.isOnline()) {
                 onlineIndicatorView.setBackgroundResource(R.drawable.green_dot);
             } else {

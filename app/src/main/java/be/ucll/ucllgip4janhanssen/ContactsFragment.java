@@ -39,7 +39,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 // Fragment voor het weergeven van de contacten opgehaald uit de telefoon
-public class ContactsFragment extends Fragment implements OnContactClickListener, OnCheckboxChangedListener {
+public class ContactsFragment extends Fragment implements OnContactClickListener {
 
     private static final int PERMISSIONS_REQUEST_READ_CONTACTS = 100;
     private RecyclerView recyclerView;
@@ -79,6 +79,50 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
     }
 
     private void loadContacts() {
+        List<Contact> contacts = fetchContactsFromDevice();  // Contacts from the device
+
+        // Get the phone numbers of registered users
+        List<String> registeredPhoneNumbers = registeredUsers.stream()
+                .map(User::getPhoneNumber)
+                .map(this::standardizePhoneNumber)
+                .collect(Collectors.toList());
+
+        // Filter contacts that are both in the phone's contact list and registered users
+        List<Contact> registeredContacts = contacts.stream()
+                .filter(contact -> registeredPhoneNumbers.contains(standardizePhoneNumber(contact.getPhoneNumber())))
+                .collect(Collectors.toList());
+
+        // Get the current user's document reference
+        String currentUserPhoneNumber = getCurrentUserPhoneNumber();
+        String standardizedCurrentUserPhoneNumber = standardizePhoneNumber(currentUserPhoneNumber);
+        CollectionReference userContactsRef = db.collection("users").document(standardizedCurrentUserPhoneNumber).collection("contacts");
+
+        // Check and add new contacts to the database
+        for (Contact contact : registeredContacts) {
+            String contactPhoneNumber = standardizePhoneNumber(contact.getPhoneNumber());
+            userContactsRef.document(contactPhoneNumber).get().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        // Contact already exists in the database, no need to add
+                        Log.d("ContactExists", "Contact already exists: " + contactPhoneNumber);
+                    } else {
+                        // Contact doesn't exist in the database, add it
+                        userContactsRef.document(contactPhoneNumber).set(contact)
+                                .addOnSuccessListener(aVoid -> Log.d("Firestore", "Contact added for user: " + currentUserPhoneNumber))
+                                .addOnFailureListener(e -> Log.e("Firestore", "Error adding contact for user: " + currentUserPhoneNumber, e));
+                    }
+                } else {
+                    Log.e("Firestore", "Error checking contact existence for user: " + currentUserPhoneNumber, task.getException());
+                }
+            });
+        }
+
+        // Set the registered contacts in the RecyclerView
+        adapter.setContacts(registeredContacts);
+    }
+    // Methode om de contacten uit de telefoon op te halen
+    private List<Contact> fetchContactsFromDevice() {
         List<Contact> contacts = new ArrayList<>();
         Cursor cursor = getActivity().getContentResolver().query(ContactsContract.Contacts.CONTENT_URI,
                 null, null, null, ContactsContract.Contacts.DISPLAY_NAME + " ASC");
@@ -124,53 +168,10 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
             Log.d("PhoneContacts", contact.getFirstName() + " " + contact.getLastName() + ", Phone: " + contact.getPhoneNumber());
         }
 
-        List<String> standardizedRegisteredPhoneNumbers = registeredUsers.stream()
-                .map(user -> standardizePhoneNumber(user.getPhoneNumber()))
-                .collect(Collectors.toList());
-
-        // Contacten filteren die in de telefoon staan en ook gebruik maken van de app
-        List<Contact> registeredContacts = new ArrayList<>();
-        for (Contact contact : contacts) {
-            String standardizedContactPhoneNumber = standardizePhoneNumber(contact.getPhoneNumber());
-            if (standardizedRegisteredPhoneNumbers.contains(standardizedContactPhoneNumber)) {
-                // Split full name into first name and last name
-                String[] fullNameParts = contact.getFirstName().split("\\s+", 2); // Split by whitespace, maximum 2 parts
-                String firstName = fullNameParts[0]; // First part is first name
-                String lastName = fullNameParts.length > 1 ? fullNameParts[1] : ""; // Second part is last name (if available)
-
-                // Create a new Contact object with standardized phone number, first name, last name, and default values for other fields
-                Contact newContact = new Contact(contact.getId(), firstName, lastName, standardizedContactPhoneNumber, false, true);
-
-                // Add newContact to registeredContacts list
-                registeredContacts.add(newContact);
-            }
-        }
-
-        // Reference to the current user's document
-        String currentUserPhoneNumber = getCurrentUserPhoneNumber();
-        String standardizedCurrentUserPhoneNumber = standardizePhoneNumber(currentUserPhoneNumber);
-        CollectionReference userContactsRef = db.collection("users").document(standardizedCurrentUserPhoneNumber).collection("contacts");
-
-        // Save each registered contact to Firestore
-        for (Contact contact : registeredContacts) {
-            // Use the contact's phone number as the document ID
-            String contactPhoneNumber = contact.getPhoneNumber();
-
-            // Set data for the contact document
-            userContactsRef.document(contactPhoneNumber).set(contact)
-                    .addOnSuccessListener(aVoid -> Log.d("Firestore", "Contact added for user: " + currentUserPhoneNumber))
-                    .addOnFailureListener(e -> Log.e("Firestore", "Error adding contact for user: " + currentUserPhoneNumber, e));
-        }
-
-        Log.d("RegisteredContacts", "Users in phone contacts and database:");
-        for (Contact contact : registeredContacts) {
-            Log.d("RegisteredContacts", contact.getPhoneNumber() + " " + contact.getId());
-        }
-
-        adapter.setContacts(registeredContacts);
+        return contacts;
     }
 
-
+    // Methode om de users die de app gebruiken op te halen uit de database
     private void loadRegisteredUsers() {
         registeredUsers = new ArrayList<>();
         db.collection("users").get()
@@ -305,10 +306,6 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
             standardizedNumber = "+" + standardizedNumber;
         }
         return standardizedNumber;
-    }
-    @Override
-    public void onCheckboxChanged(Contact contact, boolean isChecked) {
-        // Implementation of onCheckboxChanged
     }
 }
 
