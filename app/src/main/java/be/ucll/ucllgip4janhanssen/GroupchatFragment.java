@@ -103,47 +103,44 @@ public class GroupchatFragment extends Fragment {
     private void saveGroupNameToFirestore(String groupName) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // Create a new document in the "rooms" collection with the group name
-        DocumentReference roomRef = db.collection("rooms").document();
-        String roomId = roomRef.getId();
+        // Create a reference to the group chat document under the "groupchats" collection
+        DocumentReference groupChatRef = db.collection("groupchats").document(groupName);
 
         // Create a Map object to hold the group data
         Map<String, Object> groupData = new HashMap<>();
         groupData.put("name", groupName);
 
-        // Set the data for the new room
-        roomRef.set(groupData)
+        // Set the data for the new group chat
+        groupChatRef.set(groupData)
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Room created successfully");
+                    Log.d(TAG, "Group chat created successfully");
 
                     // Now, for each checked contact, add a document to the "users" subcollection
                     for (Contact contact : contactsList) {
                         if (contact.isChecked()) {
-                            addContactToRoom(db, roomId, contact);
+                            addContactToGroupChat(db, groupName, contact);
                         }
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error creating room", e);
+                    Log.e(TAG, "Error creating group chat", e);
                     // Handle errors
                 });
     }
 
-    private void addContactToRoom(FirebaseFirestore db, String roomId, Contact contact) {
+    private void addContactToGroupChat(FirebaseFirestore db, String groupName, Contact contact) {
         String contactPhoneNumber = contact.getPhoneNumber();
 
         // Create a new document in the "users" subcollection with the contact information
-        db.collection("rooms").document(roomId).collection("users")
-                .document(contactPhoneNumber) // Using the phone number as the document ID
+        db.collection("groupchats").document(groupName).collection("users").document(contactPhoneNumber)
                 .set(contact)
                 .addOnSuccessListener(aVoid -> {
-                    // Show a toast message indicating successful creation of the room
-                    Toast.makeText(getActivity(), "Room created successfully", Toast.LENGTH_SHORT).show();
+                    // Show a toast message indicating successful addition of the contact to the group chat
+                    Toast.makeText(getActivity(), "Contact added to group chat", Toast.LENGTH_SHORT).show();
 
                     navigateToContactsFragment();
                 })
-                .addOnFailureListener(e -> Log.e(TAG, "Error adding contact to room", e));
-
+                .addOnFailureListener(e -> Log.e(TAG, "Error adding contact to group chat", e));
     }
     private void navigateToContactsFragment() {
         NavHostFragment.findNavController(this).navigate(R.id.action_groupchat_to_contacts);

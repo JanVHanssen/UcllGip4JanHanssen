@@ -118,6 +118,8 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
                 }
             });
         }
+
+        // Query the contacts collection for checked contacts
         Query query = userContactsRef.whereEqualTo("checked", true);
 
         // Fetch the contacts from the database based on the query
@@ -129,8 +131,26 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
                     filteredContacts.add(contact);
                 }
 
-                // Set the filtered contacts in the RecyclerView
-                adapter.setContacts(filteredContacts);
+                // Fetch group names from the groupchats collection
+                db.collection("groupchats").get().addOnCompleteListener(groupChatTask -> {
+                    if (groupChatTask.isSuccessful()) {
+                        for (DocumentSnapshot groupChatDoc : groupChatTask.getResult()) {
+                            // Create a pseudo-contact with the group name
+                            String groupName = groupChatDoc.getId();
+                            Contact groupChatContact = new Contact();
+                            groupChatContact.setFirstName(groupName);
+                            groupChatContact.setLastName("");
+                            groupChatContact.setChecked(false); // Group names are not checked
+
+                            filteredContacts.add(groupChatContact);
+                        }
+
+                        // Set the filtered contacts in the RecyclerView
+                        adapter.setContacts(filteredContacts);
+                    } else {
+                        Log.e("Firestore", "Error getting group chats", groupChatTask.getException());
+                    }
+                });
             } else {
                 Log.e("Firestore", "Error getting contacts", task.getException());
             }
