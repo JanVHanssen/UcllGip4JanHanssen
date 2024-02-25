@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="60dp">
+
+        <!-- Group Name -->
+        <TextView
+            android:id="@+id/text_group_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Group Name"
+            android:padding="10dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Edit Text for Group Name -->
+        <EditText
+            android:id="@+id/edit_text_group_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/text_group_name" />
+
+        <!-- Select Contacts -->
+        <TextView
+            android:id="@+id/text_select_contacts"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Select Contacts"
+            android:padding="10dp"
+            android:layout_marginTop="60dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/edit_text_group_name"
+            app:layout_constraintTop_toBottomOf="@+id/edit_text_group_name"/>
+
+        <!-- RecyclerView for Contacts -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_view_contacts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:scrollbars="vertical"
+            android:padding="10dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/text_select_contacts"
+            app:layout_constraintTop_toBottomOf="@+id/text_select_contacts"/>
+
+        <!-- Create Button -->
+        <Button
+            android:id="@+id/button_create"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#E30147"
+            android:text="Create"
+            android:padding="10dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/recycler_view_contacts"
+            app:layout_constraintTop_toBottomOf="@+id/recycler_view_contacts"/>
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>

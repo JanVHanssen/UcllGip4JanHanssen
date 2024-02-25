@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
             navController.navigate(R.id.action_main_to_whitelist);
         }
         if (item.getItemId() == R.id.action_groups) {
-            openGroups();
+            navController.navigate(R.id.action_main_to_groupchat);
         }
         if (item.getItemId() == R.id.action_logout) {
             firebaseAuth.signOut();
@@ -71,9 +71,4 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-
-
-    private void openGroups() {
-        // Implement logic to open groups activity or fragment
-    }
 }

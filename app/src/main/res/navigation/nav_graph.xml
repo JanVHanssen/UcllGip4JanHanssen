@@ -28,6 +28,12 @@
         tools:layout="@layout/fragment_whitelist">
     </fragment>
 
+    <fragment
+        android:id="@+id/GroupchatFragment"
+        android:name="be.ucll.ucllgip4janhanssen.GroupchatFragment"
+        tools:layout="@layout/fragment_groupchat">
+    </fragment>
+
     <action
         android:id="@+id/action_contacts_to_chat"
         app:destination="@id/ChatFragment" />
@@ -46,6 +52,14 @@
 
     <action
         android:id="@+id/action_main_to_contacts"
+        app:destination="@id/ContactsFragment" />
+
+    <action
+        android:id="@+id/action_main_to_groupchat"
+        app:destination="@id/GroupchatFragment" />
+
+    <action
+        android:id="@+id/action_groupchat_to_contacts"
         app:destination="@id/ContactsFragment" />
 
 </navigation>
