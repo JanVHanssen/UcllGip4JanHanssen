@@ -40,29 +40,47 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 // Fragment voor het weergeven van de contacten opgehaald uit de telefoon
-public class ContactsFragment extends Fragment implements OnContactClickListener {
-
+public class ContactsFragment extends Fragment implements OnContactClickListener, GroupsAdapter.OnGroupsClickListener {
     private static final int PERMISSIONS_REQUEST_READ_CONTACTS = 100;
-    private RecyclerView recyclerView;
-    private ContactsAdapter adapter;
+    private RecyclerView recyclerViewContacts;
+    private RecyclerView recyclerViewGroups;
+    private ContactsAdapter contactsAdapter;
+    private GroupsAdapter groupsAdapter;
     private FirebaseFirestore db;
     private List<User> registeredUsers;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_contacts, container, false);
-        recyclerView = rootView.findViewById(R.id.recycler_view_contacts);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new ContactsAdapter(this);
-        recyclerView.setAdapter(adapter);
+
+        // Initialize RecyclerView for contacts
+        recyclerViewContacts = rootView.findViewById(R.id.recycler_view_contacts);
+        recyclerViewContacts.setLayoutManager(new LinearLayoutManager(getContext()));
+        contactsAdapter = new ContactsAdapter(this);
+        recyclerViewContacts.setAdapter(contactsAdapter);
+
+        // Initialize RecyclerView for groups
+        recyclerViewGroups = rootView.findViewById(R.id.recycler_view_groups);
+        recyclerViewGroups.setLayoutManager(new LinearLayoutManager(getContext()));
+        groupsAdapter = new GroupsAdapter(this);
+        recyclerViewGroups.setAdapter(groupsAdapter);
+
         db = FirebaseFirestore.getInstance();
         loadRegisteredUsers();
         requestContactsPermission();
+
         AppCompatActivity activity = (AppCompatActivity) getActivity();
         if (activity != null && activity.getSupportActionBar() != null) {
             activity.getSupportActionBar().setTitle("Contacts");
         }
+
         return rootView;
+    }
+    @Override
+    public void onGroupsClick(String groupName) {
+        // Implement the behavior when a group is clicked
+        Log.d("GroupsClick", "Group clicked: " + groupName);
+        // You can navigate to the chat fragment or perform any other action here
     }
 
     @Override
@@ -118,8 +136,6 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
                 }
             });
         }
-
-        // Query the contacts collection for checked contacts
         Query query = userContactsRef.whereEqualTo("checked", true);
 
         // Fetch the contacts from the database based on the query
@@ -131,26 +147,8 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
                     filteredContacts.add(contact);
                 }
 
-                // Fetch group names from the groupchats collection
-                db.collection("groupchats").get().addOnCompleteListener(groupChatTask -> {
-                    if (groupChatTask.isSuccessful()) {
-                        for (DocumentSnapshot groupChatDoc : groupChatTask.getResult()) {
-                            // Create a pseudo-contact with the group name
-                            String groupName = groupChatDoc.getId();
-                            Contact groupChatContact = new Contact();
-                            groupChatContact.setFirstName(groupName);
-                            groupChatContact.setLastName("");
-                            groupChatContact.setChecked(false); // Group names are not checked
-
-                            filteredContacts.add(groupChatContact);
-                        }
-
-                        // Set the filtered contacts in the RecyclerView
-                        adapter.setContacts(filteredContacts);
-                    } else {
-                        Log.e("Firestore", "Error getting group chats", groupChatTask.getException());
-                    }
-                });
+                // Set the filtered contacts in the RecyclerView
+                contactsAdapter.setContacts(filteredContacts);
             } else {
                 Log.e("Firestore", "Error getting contacts", task.getException());
             }
@@ -210,26 +208,30 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
     private void loadRegisteredUsers() {
         registeredUsers = new ArrayList<>();
         db.collection("users").get()
-                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-                    @Override
-                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                        for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
-                            User user = documentSnapshot.toObject(User.class);
-                            registeredUsers.add(user);
-                        }
-                        Log.d("RegisteredUsers", "Users in database:");
-                        for (User user : registeredUsers) {
-                            Log.d("RegisteredUsers", user.getFirstName() + " " + user.getLastName() + ", Phone: " + user.getPhoneNumber());
-                        }
-                        loadContacts();
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+                        User user = documentSnapshot.toObject(User.class);
+                        registeredUsers.add(user);
                     }
+                    loadContacts();
+                    loadGroupNames(); // Load group names after loading registered users
                 })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.e("ContactsFragment", "Error fetching registered users", e);
+                .addOnFailureListener(e -> Log.e("ContactsFragment", "Error fetching registered users", e));
+    }
+    private void loadGroupNames() {
+        db.collection("groupchats").get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<String> groupNames = new ArrayList<>();
+                    for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+                        // Assuming group name is stored as "name" field in the document
+                        String groupName = documentSnapshot.getString("name");
+                        if (groupName != null) {
+                            groupNames.add(groupName);
+                        }
                     }
-                });
+                    groupsAdapter.setGroupNames(groupNames);
+                })
+                .addOnFailureListener(e -> Log.e("ContactsFragment", "Error fetching group names", e));
     }
 
     @Override

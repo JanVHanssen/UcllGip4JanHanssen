@@ -2,14 +2,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Contacts RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view_contacts"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:divider="@android:color/darker_gray"
-        android:dividerHeight="0.5dp"
+        android:layout_height="wrap_content"
         android:padding="16dp"
-        android:clipToPadding="false"
-        android:background="@android:color/background_light" />
+        android:clipToPadding="false" />
+
+    <!-- Group Chats RecyclerView -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view_groups"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/recycler_view_contacts"
+        android:padding="16dp"
+        android:clipToPadding="false" />
 
 </RelativeLayout>
