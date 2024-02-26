@@ -1,0 +1,43 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- RecyclerView to display messages -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view_chat"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/message_input_layout"
+        android:padding="10dp"
+        android:paddingBottom="16dp"
+        android:nestedScrollingEnabled="false" />
+
+    <!-- Message Input Layout -->
+    <RelativeLayout
+        android:id="@+id/message_input_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@color/white">
+
+        <!-- Input field for typing messages -->
+        <EditText
+            android:id="@+id/edit_text_message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toLeftOf="@+id/button_send"
+            android:layout_toStartOf="@+id/button_send"
+            android:hint="Type a message"
+            android:inputType="text" />
+
+        <!-- Send button -->
+        <Button
+            android:id="@+id/button_send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:text="Send"
+            android:backgroundTint="#E30147"/>
+    </RelativeLayout>
+</RelativeLayout>

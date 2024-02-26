@@ -7,7 +7,6 @@ public class Contact {
     private String lastName;
     private String phoneNumber;
     private boolean online;
-
     private boolean isChecked;
 
     // Constructor

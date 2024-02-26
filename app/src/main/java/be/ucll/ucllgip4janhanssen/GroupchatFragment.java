@@ -79,7 +79,7 @@ public class GroupchatFragment extends Fragment {
 
         return view;
     }
-
+    // De contacts ophalen van de huidige ingelogde gebruiker
     private void fetchContactsFromFirestore() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         String currentUserPhoneNumber = getCurrentUserPhoneNumber();
@@ -99,7 +99,7 @@ public class GroupchatFragment extends Fragment {
                     // Handle errors
                 });
     }
-
+    // De groep aanmaken in de collectie groupchats in firestore
     private void saveGroupNameToFirestore(String groupName) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -115,19 +115,46 @@ public class GroupchatFragment extends Fragment {
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "Group chat created successfully");
 
+
+
                     // Now, for each checked contact, add a document to the "users" subcollection
                     for (Contact contact : contactsList) {
                         if (contact.isChecked()) {
                             addContactToGroupChat(db, groupName, contact);
                         }
                     }
+                    // Add the logged-in user to the group chat
+                    addLoggedInUserToGroupChat(db, groupName);
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error creating group chat", e);
-                    // Handle errors
                 });
     }
+    // De huidige gebruiker toevoegen aan de groepchat
+    private void addLoggedInUserToGroupChat(FirebaseFirestore db, String groupName) {
 
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        FirebaseUser loggedInUser = auth.getCurrentUser();
+
+        if (loggedInUser != null) {
+            String phoneNumber = loggedInUser.getPhoneNumber();
+
+            // Create a Contact object for the logged-in user
+            Contact loggedInContact = new Contact();
+            loggedInContact.setPhoneNumber(phoneNumber);
+
+            // Add the logged-in user to the "users" subcollection
+            db.collection("groupchats").document(groupName).collection("users").document(phoneNumber)
+                    .set(loggedInContact)
+                    .addOnSuccessListener(aVoid -> {
+                        Log.d(TAG, "Logged-in user added to group chat");
+                    })
+                    .addOnFailureListener(e -> Log.e(TAG, "Error adding logged-in user to group chat", e));
+        } else {
+            Log.e(TAG, "Current user is null");
+        }
+    }
+    // Alle aangevinkte gebruikers toevoegen aan de groepschat
     private void addContactToGroupChat(FirebaseFirestore db, String groupName, Contact contact) {
         String contactPhoneNumber = contact.getPhoneNumber();
 
@@ -142,10 +169,11 @@ public class GroupchatFragment extends Fragment {
                 })
                 .addOnFailureListener(e -> Log.e(TAG, "Error adding contact to group chat", e));
     }
+    // Navigeren naar het contacts fragment
     private void navigateToContactsFragment() {
         NavHostFragment.findNavController(this).navigate(R.id.action_groupchat_to_contacts);
     }
-
+    // Telefoon nummer ophalen van de huidige gebruiker
     private String getCurrentUserPhoneNumber() {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         FirebaseUser user = auth.getCurrentUser();

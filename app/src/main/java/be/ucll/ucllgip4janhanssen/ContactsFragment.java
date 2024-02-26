@@ -22,6 +22,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
@@ -37,6 +39,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 // Fragment voor het weergeven van de contacten opgehaald uit de telefoon
@@ -78,9 +81,10 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
     }
     @Override
     public void onGroupsClick(String groupName) {
-        // Implement the behavior when a group is clicked
-        Log.d("GroupsClick", "Group clicked: " + groupName);
-        // You can navigate to the chat fragment or perform any other action here
+        Bundle bundle = new Bundle();
+        bundle.putString("groupName", groupName);
+        bundle.putString("currentUserPhoneNumber", getCurrentUserPhoneNumber());
+        Navigation.findNavController(requireView()).navigate(R.id.action_contacts_to_groupchatroom, bundle);
     }
 
     @Override
@@ -219,19 +223,49 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
                 .addOnFailureListener(e -> Log.e("ContactsFragment", "Error fetching registered users", e));
     }
     private void loadGroupNames() {
-        db.collection("groupchats").get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    List<String> groupNames = new ArrayList<>();
-                    for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
-                        // Assuming group name is stored as "name" field in the document
-                        String groupName = documentSnapshot.getString("name");
-                        if (groupName != null) {
-                            groupNames.add(groupName);
+        String currentUserPhoneNumber = getCurrentUserPhoneNumber();
+        if (currentUserPhoneNumber != null) {
+            db.collection("groupchats").get()
+                    .addOnSuccessListener(queryDocumentSnapshots -> {
+                        List<String> groupNames = new ArrayList<>();
+                        for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+                            String groupName = documentSnapshot.getString("name");
+                            if (groupName != null) {
+                                // Check if the current user is a member of this group chat
+                                String groupChatId = documentSnapshot.getId();
+                                currentUserIsMemberOfGroupChat(currentUserPhoneNumber, groupChatId, isMember -> {
+                                    if (isMember) {
+                                        groupNames.add(groupName);
+                                        groupsAdapter.setGroupNames(groupNames);
+                                    }
+                                });
+                            }
                         }
-                    }
-                    groupsAdapter.setGroupNames(groupNames);
+                    })
+                    .addOnFailureListener(e -> Log.e("ContactsFragment", "Error fetching group names", e));
+        } else {
+            Log.e("ContactsFragment", "Current user phone number is null");
+        }
+    }
+    // Methode om na te gaan of de huidige gebruiker deel uitmaakt van een groepchat
+    private void currentUserIsMemberOfGroupChat(String currentUserPhoneNumber, String groupChatId, OnCheckMemberListener listener) {
+        db.collection("groupchats")
+                .document(groupChatId)
+                .collection("users")
+                .document(currentUserPhoneNumber)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    boolean isMember = documentSnapshot.exists();
+                    listener.onCheckMember(isMember);
                 })
-                .addOnFailureListener(e -> Log.e("ContactsFragment", "Error fetching group names", e));
+                .addOnFailureListener(e -> {
+                    Log.e("ContactsFragment", "Error checking if current user is a member of group chat", e);
+                    listener.onCheckMember(false); // Assume not a member on failure
+                });
+    }
+
+    interface OnCheckMemberListener {
+        void onCheckMember(boolean isMember);
     }
 
     @Override
