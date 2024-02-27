@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+// Fragment waar er een nieuwe chatgroep kan aangemaakt worden
 public class GroupchatFragment extends Fragment {
 
     private EditText editTextGroupName;

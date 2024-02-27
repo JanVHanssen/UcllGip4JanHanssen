@@ -30,7 +30,7 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
+// Fragment waar de groepchatgesprekken in plaatsvinden
 public class GroupChatRoomFragment extends Fragment {
 
     private RecyclerView recyclerView;
@@ -39,7 +39,7 @@ public class GroupChatRoomFragment extends Fragment {
     private EditText editTextMessage;
     private Button buttonSend;
     private String groupName;
-    private String currentUserId; // Assuming you're using some kind of user ID for identification
+    private String currentUserPhoneNumber;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -48,12 +48,12 @@ public class GroupChatRoomFragment extends Fragment {
         Bundle bundle = getArguments();
         if (bundle != null) {
             groupName = bundle.getString("groupName");
-            currentUserId = bundle.getString("currentUserId");
+            currentUserPhoneNumber = bundle.getString("currentUserPhoneNumber");
         }
 
         recyclerView = rootView.findViewById(R.id.recycler_view_chat);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new GroupMessageAdapter(new ArrayList<>(), currentUserId);
+        adapter = new GroupMessageAdapter(new ArrayList<>(), currentUserPhoneNumber);
         recyclerView.setAdapter(adapter);
 
         db = FirebaseFirestore.getInstance();

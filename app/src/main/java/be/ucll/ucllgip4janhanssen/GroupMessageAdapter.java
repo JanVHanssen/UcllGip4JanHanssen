@@ -14,12 +14,12 @@ import java.util.List;
 public class GroupMessageAdapter extends RecyclerView.Adapter<GroupMessageAdapter.GroupMessageViewHolder> {
 
     private List<GroupMessage> groupMessages;
-    private String currentUserUserId;
+    private String currentUserPhoneNumber;
 
     // Constructor
-    public GroupMessageAdapter(List<GroupMessage> groupMessages, String currentUserUserId) {
+    public GroupMessageAdapter(List<GroupMessage> groupMessages, String currentUserPhoneNumber) {
         this.groupMessages = groupMessages;
-        this.currentUserUserId = currentUserUserId;
+        this.currentUserPhoneNumber = currentUserPhoneNumber;
     }
 
     // ViewHolder for each group message item
@@ -50,21 +50,13 @@ public class GroupMessageAdapter extends RecyclerView.Adapter<GroupMessageAdapte
     public void onBindViewHolder(@NonNull GroupMessageViewHolder holder, int position) {
         GroupMessage groupMessage = groupMessages.get(position);
 
-        // Set sender name for receiver messages
-        if (getItemViewType(position) == 1) {
-            holder.senderNameTextView.setText(groupMessage.getSenderFirstName() + " " + groupMessage.getSenderLastName());
-        } else {
-            holder.senderNameTextView.setVisibility(View.GONE);
-        }
-
         holder.messageTextView.setText(groupMessage.getText());
 
         // Adjust message alignment based on sender or receiver
         if (getItemViewType(position) == 0) {
-            // Sender message: align to the right
             holder.messageTextView.setGravity(Gravity.END);
         } else {
-            // Receiver message: align to the left
+            holder.senderNameTextView.setText(groupMessage.getSenderFirstName() + " " + groupMessage.getSenderLastName());
             holder.messageTextView.setGravity(Gravity.START);
         }
     }
@@ -77,7 +69,7 @@ public class GroupMessageAdapter extends RecyclerView.Adapter<GroupMessageAdapte
     @Override
     public int getItemViewType(int position) {
         GroupMessage groupMessage = groupMessages.get(position);
-        if (groupMessage != null && groupMessage.getSenderId() != null && groupMessage.getSenderId().equals(currentUserUserId)) {
+        if (groupMessage != null && groupMessage.getSenderId() != null && groupMessage.getSenderId().equals(currentUserPhoneNumber)) {
             return 0; // Sender message
         } else {
             return 1; // Receiver message
