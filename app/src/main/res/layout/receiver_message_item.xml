@@ -14,7 +14,7 @@
         android:padding="8dp"
         android:textStyle="normal"
         android:gravity="start"
-        android:background="@android:color/holo_blue_light"
+        android:background="@drawable/receiver_message"
         android:text="receiver message here"/>
 
 </RelativeLayout>

@@ -39,10 +39,8 @@ public class ChatFragment extends Fragment {
     private RecyclerView recyclerView;
     private MessageAdapter adapter;
     private FirebaseFirestore db;
-    private EditText editTextMessage;
-    private Button buttonSend;
     private String roomId;
-    private String currentUserPhoneNumber;
+    private LinearLayoutManager layoutManager;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -51,121 +49,65 @@ public class ChatFragment extends Fragment {
 
         Bundle bundle = getArguments();
         if (bundle != null) {
-            currentUserPhoneNumber = bundle.getString("currentUserPhoneNumber");
+            roomId = bundle.getString("roomId");
         }
 
         recyclerView = rootView.findViewById(R.id.recycler_view_chat);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new MessageAdapter(new ArrayList<>(), currentUserPhoneNumber);
+        layoutManager = new LinearLayoutManager(getContext());
+        recyclerView.setLayoutManager(layoutManager);
+
+        adapter = new MessageAdapter(new ArrayList<>(), bundle.getString("currentUserPhoneNumber"));
         recyclerView.setAdapter(adapter);
 
         db = FirebaseFirestore.getInstance();
 
-        roomId = getArguments().getString("roomId");
-
-        editTextMessage = rootView.findViewById(R.id.edit_text_message);
-        buttonSend = rootView.findViewById(R.id.button_send);
-        buttonSend.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendMessage();
-            }
-        });
+        recyclerView.post(() -> recyclerView.scrollToPosition(adapter.getItemCount() - 1));
 
         return rootView;
     }
-
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Dit stuk gaat de naam van de chatpartner ophalen uit de bundel, meegestuurd door de vorige fragment, en dan weergeven in de toolbar
-        Bundle bundle = getArguments();
-        if (bundle != null) {
-            currentUserPhoneNumber = bundle.getString("currentUserPhoneNumber");
-            String firstName = bundle.getString("firstName");
-            String lastName = bundle.getString("lastName");
-            AppCompatActivity activity = (AppCompatActivity) getActivity();
-            if (activity != null && activity.getSupportActionBar() != null) {
-                if (firstName != null && lastName != null) {
-                    String fullName = firstName + " " + lastName;
-                    activity.getSupportActionBar().setTitle(fullName);
-                }
-            }
-        }
-
-        // Dit stuk gaat een pijltje terug op de toolbar zetten
-        if (getActivity() != null && getActivity() instanceof AppCompatActivity) {
-            ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
-            if (actionBar != null) {
-                actionBar.setDisplayHomeAsUpEnabled(true);
-            }
-        }
-
-        Log.d("ChatFragment", "Room ID: " + roomId);
-
-        // Dit gaat alle berichten van deze chatroom ophalen en rangschikken volgens tijdstip
         db.collection("rooms").document(roomId)
                 .collection("messages")
                 .orderBy("time", Query.Direction.ASCENDING)
-                .addSnapshotListener((queryDocumentSnapshots, e) -> {
-                    if (e != null) {
-                        Log.e("ChatFragment", "Error fetching messages", e);
-                        return;
-                    }
-                    if (queryDocumentSnapshots != null) {
-
-                        List<Message> messages = new ArrayList<>(); // De berichten worden in een lijst gezet
-                        for (DocumentSnapshot document : queryDocumentSnapshots) {
-                            // Elk document wordt omgezet naar een 'message' document en in de lijst gezet
-                            Message message = document.toObject(Message.class);
-                            if (message != null) {
-                                messages.add(message);
-                            }
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<Message> messages = new ArrayList<>();
+                    for (DocumentSnapshot document : queryDocumentSnapshots) {
+                        Message message = document.toObject(Message.class);
+                        if (message != null) {
+                            messages.add(message);
                         }
-                        adapter.setMessages(messages);
                     }
+                    adapter.setMessages(messages);
+                    recyclerView.scrollToPosition(adapter.getItemCount() - 1); // Scroll to bottom after updating messages
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("ChatFragment", "Error fetching messages", e);
                 });
     }
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        // Wanneer er op de terugknop van de toolbar wordt geklikt
-        if (item.getItemId() == android.R.id.home) {
-            Navigation.findNavController(requireView()).navigate(R.id.action_chat_to_contacts);
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 
-    private void sendMessage() {
-        String messageText = editTextMessage.getText().toString().trim();
-        if (!messageText.isEmpty()) {
-            if (currentUserPhoneNumber != null) {
-                String senderId = currentUserPhoneNumber;
-                String time = getCurrentTimestamp();
+    private void sendMessage(String messageText, String senderId) {
+        if (!messageText.isEmpty() && senderId != null) {
+            String time = getCurrentTimestamp();
+            Message message = new Message(null, messageText, senderId, time, roomId);
 
-                // Nieuw message object aanmaken
-                Message message = new Message(null, messageText, senderId, time, roomId);
-
-                // Opslaan in de firestore
-                db.collection("rooms").document(roomId)
-                        .collection("messages")
-                        .add(message)
-                        .addOnSuccessListener(documentReference -> {
-                            Log.d("SendMessage", "Message sent successfully");
-                            // Tekstveld beneden leegmaken
-                            editTextMessage.getText().clear();
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.e("SendMessage", "Error sending message", e);
-                            // Handle the error
-                        });
-            }
+            db.collection("rooms").document(roomId)
+                    .collection("messages")
+                    .add(message)
+                    .addOnSuccessListener(documentReference -> {
+                        Log.d("SendMessage", "Message sent successfully");
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e("SendMessage", "Error sending message", e);
+                    });
         }
     }
+
     private String getCurrentTimestamp() {
-        // Get current timestamp
         return DateFormat.getDateTimeInstance().format(new Date());
     }
 }

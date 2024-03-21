@@ -4,6 +4,7 @@
     android:layout_height="wrap_content"
     android:padding="8dp"
     android:layout_marginStart="16dp"
+
     >
 
     <TextView
@@ -14,10 +15,8 @@
         android:textSize="16sp"
         android:textStyle="normal"
         android:layout_alignParentEnd="true"
-        android:background="@android:color/holo_green_light"
-        android:radius="10dp"
         android:padding="8dp"
-
+        android:background="@drawable/sender_message"
         android:text="sender message here"
         />
 

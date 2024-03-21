@@ -103,27 +103,25 @@ public class GroupchatFragment extends Fragment {
     private void saveGroupNameToFirestore(String groupName) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // Create a reference to the group chat document under the "groupchats" collection
         DocumentReference groupChatRef = db.collection("groupchats").document(groupName);
 
-        // Create a Map object to hold the group data
         Map<String, Object> groupData = new HashMap<>();
         groupData.put("name", groupName);
 
-        // Set the data for the new group chat
         groupChatRef.set(groupData)
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "Group chat created successfully");
 
+                    // Standardize phone numbers of contacts
+                    for (Contact contact : contactsList) {
+                        contact.setPhoneNumber(standardizePhoneNumber(contact.getPhoneNumber()));
+                    }
 
-
-                    // Now, for each checked contact, add a document to the "users" subcollection
                     for (Contact contact : contactsList) {
                         if (contact.isChecked()) {
                             addContactToGroupChat(db, groupName, contact);
                         }
                     }
-                    // Add the logged-in user to the group chat
                     addLoggedInUserToGroupChat(db, groupName);
                 })
                 .addOnFailureListener(e -> {
@@ -182,5 +180,14 @@ public class GroupchatFragment extends Fragment {
         } else {
             return null;
         }
+    }
+    private String standardizePhoneNumber(String phoneNumber) {
+        // Remove all non-numeric characters from the phone number
+        String standardizedNumber = phoneNumber.replaceAll("[^0-9]", "");
+        // Add country code if missing (assuming a country code of "+1" for example)
+        if (!standardizedNumber.startsWith("+")) {
+            standardizedNumber = "+" + standardizedNumber;
+        }
+        return standardizedNumber;
     }
 }

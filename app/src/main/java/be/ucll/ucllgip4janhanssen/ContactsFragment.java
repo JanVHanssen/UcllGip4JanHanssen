@@ -56,13 +56,11 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_contacts, container, false);
 
-        // Initialize RecyclerView for contacts
         recyclerViewContacts = rootView.findViewById(R.id.recycler_view_contacts);
         recyclerViewContacts.setLayoutManager(new LinearLayoutManager(getContext()));
         contactsAdapter = new ContactsAdapter(this);
         recyclerViewContacts.setAdapter(contactsAdapter);
 
-        // Initialize RecyclerView for groups
         recyclerViewGroups = rootView.findViewById(R.id.recycler_view_groups);
         recyclerViewGroups.setLayoutManager(new LinearLayoutManager(getContext()));
         groupsAdapter = new GroupsAdapter(this);
@@ -79,6 +77,8 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
 
         return rootView;
     }
+
+    // Methode voor wanneer er op de naam van een groepchat wordt geklikt
     @Override
     public void onGroupsClick(String groupName) {
         Bundle bundle = new Bundle();
@@ -92,7 +92,7 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
         super.onResume();
         requestContactsPermission();
     }
-
+    // Methode om toestemming te vragen de gegevens uit de telefoon op te halen
     private void requestContactsPermission() {
         if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.READ_CONTACTS}, PERMISSIONS_REQUEST_READ_CONTACTS);
@@ -101,60 +101,94 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
         }
     }
 
+    // Methode om de contacten op te halen die in de telefoon zitten en de app gebruiken
     private void loadContacts() {
-        List<Contact> contacts = fetchContactsFromDevice();  // Contacts from the device
+        // Lijst met contacten in de telefoon
+        List<Contact> contacts = fetchContactsFromDevice();
 
-        // Get the phone numbers of registered users
+        // Lijst met gebruikers van de app
         List<String> registeredPhoneNumbers = registeredUsers.stream()
                 .map(User::getPhoneNumber)
                 .map(this::standardizePhoneNumber)
                 .collect(Collectors.toList());
 
-        // Filter contacts that are both in the phone's contact list and registered users
+        // Lijst van gebruikers die ook in de telefoon staan
         List<Contact> registeredContacts = contacts.stream()
                 .filter(contact -> registeredPhoneNumbers.contains(standardizePhoneNumber(contact.getPhoneNumber())))
                 .collect(Collectors.toList());
 
-        // Get the current user's document reference
+        // Log die het resultaat van het filteren gaat tonen, welke gebruikers gebruiken de app en staan in het telefoon geheugen?
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("Users in de telefoon die ook de app gebruiken: ");
+        for (Contact contact : registeredContacts) {
+            stringBuilder.append("\n")
+                    .append(contact.getFirstName())
+                    .append(" ")
+                    .append(contact.getLastName())
+                    .append(", Phone: ")
+                    .append(contact.getPhoneNumber());
+        }
+        Log.d("FilteredContacts", stringBuilder.toString());
+
         String currentUserPhoneNumber = getCurrentUserPhoneNumber();
         String standardizedCurrentUserPhoneNumber = standardizePhoneNumber(currentUserPhoneNumber);
         CollectionReference userContactsRef = db.collection("users").document(standardizedCurrentUserPhoneNumber).collection("contacts");
 
-        // Check and add new contacts to the database
+        // Toevoegen in de database, in de collectie contacten bij de ingelogde user
         for (Contact contact : registeredContacts) {
             String contactPhoneNumber = standardizePhoneNumber(contact.getPhoneNumber());
-            userContactsRef.document(contactPhoneNumber).get().addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    DocumentSnapshot document = task.getResult();
-                    if (document.exists()) {
-                        // Contact already exists in the database, no need to add
-                        Log.d("ContactExists", "Contact already exists: " + contactPhoneNumber);
+            if (registeredPhoneNumbers.contains(contactPhoneNumber)) {
+                userContactsRef.document(contactPhoneNumber).get().addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        DocumentSnapshot document = task.getResult();
+                        if (document.exists()) {
+                            Log.d("ContactExists", "Contact already exists: " + contactPhoneNumber);
+                        } else {
+                            userContactsRef.document(contactPhoneNumber).set(contact)
+                                    .addOnSuccessListener(aVoid -> Log.d("Firestore", "Contact added for user: " + currentUserPhoneNumber))
+                                    .addOnFailureListener(e -> Log.e("Firestore", "Error adding contact for user: " + currentUserPhoneNumber, e));
+                        }
                     } else {
-                        // Contact doesn't exist in the database, add it
-                        userContactsRef.document(contactPhoneNumber).set(contact)
-                                .addOnSuccessListener(aVoid -> Log.d("Firestore", "Contact added for user: " + currentUserPhoneNumber))
-                                .addOnFailureListener(e -> Log.e("Firestore", "Error adding contact for user: " + currentUserPhoneNumber, e));
+                        Log.e("Firestore", "Error checking contact existence for user: " + currentUserPhoneNumber, task.getException());
                     }
-                } else {
-                    Log.e("Firestore", "Error checking contact existence for user: " + currentUserPhoneNumber, task.getException());
-                }
-            });
+                });
+            }
         }
-        Query query = userContactsRef.whereEqualTo("checked", true);
 
-        // Fetch the contacts from the database based on the query
-        query.get().addOnCompleteListener(task -> {
+        // Weergave op het scherm
+        userContactsRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
-                List<Contact> filteredContacts = new ArrayList<>();
+                List<Contact> allContacts = new ArrayList<>();
                 for (DocumentSnapshot document : task.getResult()) {
                     Contact contact = document.toObject(Contact.class);
-                    filteredContacts.add(contact);
+                    // Fetch online status for each contact
+                    fetchOnlineStatus(contact, () -> {
+                        allContacts.add(contact);
+                        contactsAdapter.setContacts(allContacts);
+                    });
                 }
-
-                // Set the filtered contacts in the RecyclerView
-                contactsAdapter.setContacts(filteredContacts);
             } else {
                 Log.e("Firestore", "Error getting contacts", task.getException());
+            }
+        });
+    }
+
+    // Method to fetch online status for a contact
+    private void fetchOnlineStatus(Contact contact, Runnable callback) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        String contactPhoneNumber = standardizePhoneNumber(contact.getPhoneNumber());
+        db.collection("users").document(contactPhoneNumber).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if (document.exists()) {
+                    boolean isOnline = document.getBoolean("online");
+                    contact.setOnline(isOnline);
+                    callback.run();
+                } else {
+                    Log.d("Firestore", "Contact document does not exist for phone number: " + contactPhoneNumber);
+                }
+            } else {
+                Log.e("Firestore", "Error fetching online status for contact: " + contactPhoneNumber, task.getException());
             }
         });
     }
@@ -200,7 +234,7 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
             Log.e("Cursor", "Cursor is null");
         }
 
-        Log.d("PhoneContacts", "Users in phone contacts:");
+        Log.d("PhoneContacts", "Contacten in telefoon geheugen:");
         for (Contact contact : contacts) {
             Log.d("PhoneContacts", contact.getFirstName() + " " + contact.getLastName() + ", Phone: " + contact.getPhoneNumber());
         }
@@ -216,12 +250,16 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
                     for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
                         User user = documentSnapshot.toObject(User.class);
                         registeredUsers.add(user);
+
+                        Log.d("ContactsFragment", "Gebruikers van de app: " + user.getFirstName() + " " + user.getLastName() + ", Phone: " + user.getPhoneNumber());
                     }
                     loadContacts();
-                    loadGroupNames(); // Load group names after loading registered users
+                    loadGroupNames();
                 })
                 .addOnFailureListener(e -> Log.e("ContactsFragment", "Error fetching registered users", e));
     }
+
+    // Lijst met groepchats ophalen
     private void loadGroupNames() {
         String currentUserPhoneNumber = getCurrentUserPhoneNumber();
         if (currentUserPhoneNumber != null) {
@@ -231,7 +269,6 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
                         for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
                             String groupName = documentSnapshot.getString("name");
                             if (groupName != null) {
-                                // Check if the current user is a member of this group chat
                                 String groupChatId = documentSnapshot.getId();
                                 currentUserIsMemberOfGroupChat(currentUserPhoneNumber, groupChatId, isMember -> {
                                     if (isMember) {
@@ -247,6 +284,7 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
             Log.e("ContactsFragment", "Current user phone number is null");
         }
     }
+
     // Methode om na te gaan of de huidige gebruiker deel uitmaakt van een groepchat
     private void currentUserIsMemberOfGroupChat(String currentUserPhoneNumber, String groupChatId, OnCheckMemberListener listener) {
         db.collection("groupchats")
