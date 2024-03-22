@@ -161,11 +161,14 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
                 List<Contact> allContacts = new ArrayList<>();
                 for (DocumentSnapshot document : task.getResult()) {
                     Contact contact = document.toObject(Contact.class);
-                    // Fetch online status for each contact
-                    fetchOnlineStatus(contact, () -> {
-                        allContacts.add(contact);
-                        contactsAdapter.setContacts(allContacts);
-                    });
+                    // Check if the contact is not blocked
+                    if (contact.isChecked()) {
+                        // Fetch online status for each contact
+                        fetchOnlineStatus(contact, () -> {
+                            allContacts.add(contact);
+                            contactsAdapter.setContacts(allContacts);
+                        });
+                    }
                 }
             } else {
                 Log.e("Firestore", "Error getting contacts", task.getException());
