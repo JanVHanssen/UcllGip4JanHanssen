@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
+// Adapter voor het weergeven van de whitelist
 public class WhitelistAdapter extends RecyclerView.Adapter<WhitelistAdapter.ContactViewHolder> {
 
     private List<Contact> contacts;

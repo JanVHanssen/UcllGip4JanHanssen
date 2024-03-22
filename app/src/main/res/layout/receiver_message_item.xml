@@ -2,8 +2,14 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_marginStart="16dp"
-    android:padding="8dp"
->
+    android:padding="8dp">
+
+    <ImageView
+        android:id="@+id/image_view"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:src="@drawable/default_image"
+    android:visibility="gone" />
 
     <TextView
         android:id="@+id/message_text_view"
@@ -16,5 +22,4 @@
         android:gravity="start"
         android:background="@drawable/receiver_message"
         android:text="receiver message here"/>
-
 </RelativeLayout>

@@ -18,6 +18,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.HashMap;
 import java.util.Map;
 
+
+// Scherm voor het registreren van een nieuwe gebruiker
 public class RegisterActivity extends AppCompatActivity {
 
     private static final String TAG = "RegisterActivity";
@@ -49,8 +51,9 @@ public class RegisterActivity extends AppCompatActivity {
         });
     }
 
+    // Een nieuwe gebruiker toevoegen en alles laten opslaan in firebase
     private void registerUser() {
-        String phoneNumber = phoneNumberEditText.getText().toString().trim().replaceAll("\\s", ""); // Remove spaces from phone number
+        String phoneNumber = phoneNumberEditText.getText().toString().trim().replaceAll("\\s", "");
         String firstName = firstNameEditText.getText().toString().trim();
         String lastName = lastNameEditText.getText().toString().trim();
         boolean agree = agreeCheckBox.isChecked();
@@ -65,14 +68,12 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        // Create a new user object
         User user = new User();
         user.setId(phoneNumber);
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setPhoneNumber(phoneNumber);
 
-        // Save user to Firebase Firestore
         db.collection("users").document(phoneNumber).set(user)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override

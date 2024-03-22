@@ -173,7 +173,7 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
         });
     }
 
-    // Method to fetch online status for a contact
+    // Methode om te gaan kijken of de gebruiker online/offline is
     private void fetchOnlineStatus(Contact contact, Runnable callback) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         String contactPhoneNumber = standardizePhoneNumber(contact.getPhoneNumber());
@@ -192,6 +192,7 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
             }
         });
     }
+
     // Methode om de contacten uit de telefoon op te halen
     private List<Contact> fetchContactsFromDevice() {
         List<Contact> contacts = new ArrayList<>();
@@ -306,6 +307,7 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
         void onCheckMember(boolean isMember);
     }
 
+    // Toestemming vragen om de contacten uit de telefoon uit te lezen
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -318,6 +320,7 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
         }
     }
 
+    // Wanneer er op een contact geklikt wordt, wordt de gebruiker doorgestuurd naar de chatroom
     private void navigateToChatFragment(String roomId, Contact user) {
         Bundle bundle = new Bundle();
         bundle.putString("firstName", user.getFirstName());
@@ -327,6 +330,7 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
         Navigation.findNavController(requireView()).navigate(R.id.action_contacts_to_chat, bundle);
     }
 
+    // Wanneer er op een contact geklikt wordt, gaat er gekeken worden of er al een room bestaat
     @Override
     public void onContactClick(Contact user) {
         Log.d("Contact Clicked", "Name: " + user.getFirstName() + " " + user.getLastName() + " , Phone: " + user.getPhoneNumber());
@@ -373,6 +377,7 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
         }
     }
 
+    // Methode om een nieuwe chatroom aan te maken en op te slaan in firebase
     private void createNewRoom(String currentUserPhoneNumber, Contact contactUser) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         Map<String, Object> roomData = new HashMap<>();
@@ -395,6 +400,7 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
                 });
     }
 
+    // Telefoonnummer van de huidige gebruiker ophalen
     private String getCurrentUserPhoneNumber() {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         FirebaseUser user = auth.getCurrentUser();
@@ -407,6 +413,7 @@ public class ContactsFragment extends Fragment implements OnContactClickListener
         }
     }
 
+    // Methode om de spaties uit het telefoonnr te halen
     private String standardizePhoneNumber(String phoneNumber) {
         // Remove all non-numeric characters from the phone number
         String standardizedNumber = phoneNumber.replaceAll("[^0-9]", "");

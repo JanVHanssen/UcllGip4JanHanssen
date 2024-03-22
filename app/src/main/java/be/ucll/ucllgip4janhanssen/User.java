@@ -1,5 +1,6 @@
 package be.ucll.ucllgip4janhanssen;
 
+// Model dat een user beschrijft
 public class User {
     private String id;
     private String firstName;

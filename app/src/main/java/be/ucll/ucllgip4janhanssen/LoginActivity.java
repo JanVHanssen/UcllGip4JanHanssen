@@ -97,6 +97,7 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    // Methode voor het online zetten van de gebruiker die inlogt(online/offline status)
     private void updateUserOnlineStatus(boolean online) {
         String phoneNumber = getCurrentUserPhoneNumber();
         Log.d("LoginActivity", "Current user phone number: " + phoneNumber);
@@ -122,6 +123,7 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    // Methode voor het telefoonnummer van de huidige gebruiker op te halen
     private String getCurrentUserPhoneNumber() {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         FirebaseUser user = auth.getCurrentUser();

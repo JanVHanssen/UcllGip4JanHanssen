@@ -82,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    // Aanpassen van de online/offline status van de gebruiker. Nodig voor de logout optie
     private void updateUserOnlineStatus(boolean online) {
         String phoneNumber = getCurrentUserPhoneNumber();
         Log.d("MainActivity", "Current user phone number: " + phoneNumber);
@@ -106,6 +107,8 @@ public class MainActivity extends AppCompatActivity {
             });
         }
     }
+
+    // Telefoonnummer van de huidige gebruiker ophalen
     private String getCurrentUserPhoneNumber() {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         FirebaseUser user = auth.getCurrentUser();

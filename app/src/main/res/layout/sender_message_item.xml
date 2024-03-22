@@ -3,9 +3,15 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:padding="8dp"
-    android:layout_marginStart="16dp"
+    android:layout_marginStart="16dp">
 
-    >
+    <ImageView
+        android:id="@+id/image_view"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:src="@drawable/default_image"
+    android:layout_alignParentEnd="true"
+    android:visibility="gone" />
 
     <TextView
         android:id="@+id/message_text_view"
@@ -14,10 +20,8 @@
         android:textColor="@android:color/black"
         android:textSize="16sp"
         android:textStyle="normal"
-        android:layout_alignParentEnd="true"
-        android:padding="8dp"
-        android:background="@drawable/sender_message"
-        android:text="sender message here"
-        />
-
+        android:layout_toStartOf="@id/image_view"
+    android:padding="8dp"
+    android:background="@drawable/sender_message"
+    android:text="sender message here" />
 </RelativeLayout>

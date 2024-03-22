@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
+// Adapter voor het scherm waarin je een nieuwe groepchat kan maken
 public class GroupChatAdapter extends RecyclerView.Adapter<GroupChatAdapter.ContactViewHolder> {
 
     private List<Contact> contacts;

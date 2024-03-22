@@ -2,6 +2,7 @@ package be.ucll.ucllgip4janhanssen;
 
 import java.util.List;
 
+// Model om een chatroom te beschrijven
 public class Room {
     private String id;
     private List<String> users;

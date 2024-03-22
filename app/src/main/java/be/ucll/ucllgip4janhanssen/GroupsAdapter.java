@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
+// Adapter voor het weergeven van de lijst met groepchats in het contacts scherm
 public class GroupsAdapter extends RecyclerView.Adapter<GroupsAdapter.GroupsViewHolder> {
 
     private List<String> groupNames = new ArrayList<>();

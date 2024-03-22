@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+// Fragment waarin de gebruiker andere gebruikers kan blokkeren
 public class WhitelistFragment extends Fragment {
 
     private FirebaseFirestore db;
@@ -59,6 +60,7 @@ public class WhitelistFragment extends Fragment {
         return view;
     }
 
+    // Lijst met gebruikers ophalen uit de database
     private void loadContacts() {
         String currentUserPhoneNumber = FirebaseAuth.getInstance().getCurrentUser().getPhoneNumber();
         db.collection("users").document(currentUserPhoneNumber).collection("contacts")
@@ -68,19 +70,19 @@ public class WhitelistFragment extends Fragment {
                         Contact contact = documentSnapshot.toObject(Contact.class);
                         contactsList.add(contact);
                     }
-                    adapter.notifyDataSetChanged(); // Notify the adapter of the data change
+                    adapter.notifyDataSetChanged();
                 })
                 .addOnFailureListener(e -> {
-                    // Handle failure
                 });
     }
+
+    // Wijzigingen opslaan in de database, gebruikers die geblokkeerd zijn
     private void updateDatabase(Contact contact, boolean isChecked) {
         String currentUserPhoneNumber = FirebaseAuth.getInstance().getCurrentUser().getPhoneNumber();
         String standardizedCurrentUserPhoneNumber = standardizePhoneNumber(currentUserPhoneNumber);
         String contactPhoneNumber = contact.getPhoneNumber();
         String standardizedContactPhoneNumber = standardizePhoneNumber(contactPhoneNumber);
 
-        // Update the 'checked' field in the Firestore database
         db.collection("users").document(standardizedCurrentUserPhoneNumber)
                 .collection("contacts").document(standardizedContactPhoneNumber)
                 .update("checked", isChecked)
@@ -88,6 +90,8 @@ public class WhitelistFragment extends Fragment {
                 .addOnFailureListener(e -> Log.e("Firestore", "Error updating checkbox state for contact: " + contactPhoneNumber, e));
 
     }
+
+    // Telefoonnummer aanpassen, spaties eruit halen
     private String standardizePhoneNumber(String phoneNumber) {
         // Remove all non-numeric characters from the phone number
         String standardizedNumber = phoneNumber.replaceAll("[^0-9]", "");

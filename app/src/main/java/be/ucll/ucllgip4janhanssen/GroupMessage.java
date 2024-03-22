@@ -1,5 +1,7 @@
 package be.ucll.ucllgip4janhanssen;
 
+
+// Model dat een bericht in de groepchat beschrijft
 public class GroupMessage {
     private String id;
     private String text;
