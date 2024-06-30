@@ -1,6 +1,7 @@
 package be.ucll.ucllgip4janhanssen;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,7 +32,6 @@ public class SettingsFragment extends Fragment {
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
 
-    @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
@@ -48,28 +48,31 @@ public class SettingsFragment extends Fragment {
         passwordEditText = view.findViewById(R.id.password);
         registerRemoveButton = view.findViewById(R.id.registerRemoveButton);
 
-        if (currentUser != null && currentUser.getEmail() != null) {
-            registerRemoveButton.setText("Remove");
-
-            emailEditText.setText(currentUser.getEmail());
-            passwordEditText.setHint("**********");
-            passwordEditText.setEnabled(false);
+        if (currentUser != null) {
+            if (currentUser.getEmail() == null || currentUser.getEmail().length() <= 3) {
+                Log.d("SettingsFragment", "User phone number: " + currentUser.getPhoneNumber());
+                Log.d("SettingsFragment", "User email: " + currentUser.getEmail());
+                registerRemoveButton.setText("Remove");
+                emailEditText.setText(currentUser.getEmail());
+                passwordEditText.setHint("**********");
+                passwordEditText.setEnabled(false);
+            } else {
+                Log.d("SettingsFragment", "User email is null");
+                registerRemoveButton.setText("Register");
+            }
         } else {
-            registerRemoveButton.setText("Register");
+            Log.d("SettingsFragment", "Current user is null");
         }
 
         registerRemoveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String buttonText = registerRemoveButton.getText().toString();
-                if (buttonText.equals("Register")) {
-                    // User wants to register email and password
+                if (currentUser != null && currentUser.getEmail() != null || !currentUser.getEmail().isEmpty()) {
+                    removeEmailAndPassword();
+                } else {
                     String email = emailEditText.getText().toString().trim();
                     String password = passwordEditText.getText().toString().trim();
                     registerEmailAndPassword(email, password);
-                } else if (buttonText.equals("Remove")) {
-                    // User wants to remove email and password
-                    removeEmailAndPassword();
                 }
             }
         });
